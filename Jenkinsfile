@@ -1,22 +1,17 @@
 pipeline {
     agent any
     tools {
-        git 'Default'  // Make sure Git is configured
+        git 'Default'  // Make sure Git is configured in Jenkins global tools
     }
 
     parameters {
         choice(name: 'ENV', choices: ['dev', 'qa'], description: 'Select environment')
         string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS Region')
 
-        // Dev secrets
-        string(name: 'SECRET_DEV', defaultValue: 'test/dev-db', description: 'Secret Name (Dev)')
-        string(name: 'DB_USERNAME_DEV', defaultValue: 'dev_user', description: 'Database Username (Dev)')
-        password(name: 'DB_PASSWORD_DEV', defaultValue: 'dev_pass', description: 'Database Password (Dev)')
-
-        // QA secrets
-        string(name: 'SECRET_QA', defaultValue: 'test/qa-db', description: 'Secret Name (QA)')
-        string(name: 'DB_USERNAME_QA', defaultValue: 'qa_user', description: 'Database Username (QA)')
-        password(name: 'DB_PASSWORD_QA', defaultValue: 'qa_pass', description: 'Database Password (QA)')
+        // Secrets from Jenkins (not in code)
+        string(name: 'SECRET_NAME', defaultValue: 'test/dev-db', description: 'Secret Name')
+        string(name: 'SECRET_USERNAME', defaultValue: 'vikrant', description: 'Secret Username')
+        password(name: 'SECRET_PASSWORD', defaultValue: 'mypass123', description: 'Secret Password')
     }
 
     environment {
@@ -30,35 +25,20 @@ pipeline {
             }
         }
 
-        stage('Update TFVARS File') {
+        stage('Overwrite TFVARS with Jenkins Secrets') {
             steps {
                 script {
-                    def secretName = "test/dev-db"
-                    def username = "vikrant"
-                    def password = "mypass123"
-
-                    if (params.ENV == 'dev') {
-                        secretName = params.SECRET_DEV
-                        username   = params.DB_USERNAME_DEV
-                        password   = params.DB_PASSWORD_DEV
-                    } else if (params.ENV == 'qa') {
-                        secretName = params.SECRET_QA
-                        username   = params.DB_USERNAME_QA
-                        password   = params.DB_PASSWORD_QA
-                    }
-
-                    // Overwrite existing tfvars file
+                    // Overwrite tfvars file dynamically
                     bat """
                     echo aws_region   = \\"${params.AWS_REGION}\\" > %TFVARS_FILE%
                     echo environment  = \\"${params.ENV}\\" >> %TFVARS_FILE%
-                    echo secret_name  = \\"${secretName}\\" >> %TFVARS_FILE%
+                    echo secret_name  = \\"${params.SECRET_NAME}\\" >> %TFVARS_FILE%
                     echo secret_values = { >> %TFVARS_FILE%
-                    echo   username = \\"${username}\\" >> %TFVARS_FILE%
-                    echo   password = \\"${password}\\" >> %TFVARS_FILE%
+                    echo   username = \\"${params.SECRET_USERNAME}\\" >> %TFVARS_FILE%
+                    echo   password = \\"${params.SECRET_PASSWORD}\\" >> %TFVARS_FILE%
                     echo } >> %TFVARS_FILE%
                     """
-
-                    echo "✅ TFVARS file updated at %TFVARS_FILE%"
+                    echo "✅ TFVARS file updated dynamically from Jenkins parameters: %TFVARS_FILE%"
                 }
             }
         }
