@@ -28,17 +28,17 @@ pipeline {
         stage('Overwrite TFVARS with Jenkins Secrets') {
             steps {
                 script {
-                    // Overwrite tfvars file dynamically
-                    bat """
-                    echo aws_region   = \\"${params.AWS_REGION}\\" > %TFVARS_FILE%
-                    echo environment  = \\"${params.ENV}\\" >> %TFVARS_FILE%
-                    echo secret_name  = \\"${params.SECRET_NAME}\\" >> %TFVARS_FILE%
-                    echo secret_values = { >> %TFVARS_FILE%
-                    echo   username = \\"${params.SECRET_USERNAME}\\" >> %TFVARS_FILE%
-                    echo   password = \\"${params.SECRET_PASSWORD}\\" >> %TFVARS_FILE%
-                    echo } >> %TFVARS_FILE%
-                    """
-                    echo "✅ TFVARS file updated dynamically from Jenkins parameters: %TFVARS_FILE%"
+                    def tfvarsFile = "env/${params.ENV}.tfvars"
+                    def content = """aws_region   = "${params.AWS_REGION}"
+        environment  = "${params.ENV}"
+        secret_name  = "${params.SECRET_NAME}"
+        secret_values = {
+        username = "${params.SECRET_USERNAME}"
+        password = "${params.SECRET_PASSWORD}"
+        }
+        """
+                    writeFile file: tfvarsFile, text: content
+                    echo "✅ TFVARS file updated at ${tfvarsFile}"
                 }
             }
         }
