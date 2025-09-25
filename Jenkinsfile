@@ -55,9 +55,7 @@ pipeline {
             steps {
                 bat """
                 terraform plan -input=false -var-file="envs/${params.ENV}.tfvars" ^
-                  -var "aws_region=%TF_VAR_aws_region%" ^
-                  -var "environment=%TF_VAR_environment%" ^
-                  -var "secret_name=%TF_VAR_secret_name%" ^
+                  -var "secret_name=test/dev-db" ^
                   -var "secret_values=%TF_VAR_secret_values%"
                 """
             }
@@ -67,9 +65,7 @@ pipeline {
             steps {
                 bat """
                 terraform apply -auto-approve -input=false -var-file="envs/${params.ENV}.tfvars ^
-                  -var "aws_region=%TF_VAR_aws_region%" ^
-                  -var "environment=%TF_VAR_environment%" ^
-                  -var "secret_name=%TF_VAR_secret_name%" ^
+                  -var "secret_name=test/dev-db" ^
                   -var "secret_values=%TF_VAR_secret_values%"
                 """
             }
