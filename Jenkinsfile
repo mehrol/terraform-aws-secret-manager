@@ -9,7 +9,7 @@ pipeline {
         string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS Region')
 
         // Secrets from Jenkins (not in code)
-        string(name: 'SECRET_NAME', defaultValue: 'test/dev-db', description: 'Secret Name')
+        string(name: 'SECRET_NAME', defaultValue: 'test1/dev-db', description: 'Secret Name')
         string(name: 'SECRET_USERNAME', defaultValue: 'vikrant', description: 'Secret Username')
         password(name: 'SECRET_PASSWORD', defaultValue: 'mypass123', description: 'Secret Password')
     }
@@ -28,7 +28,7 @@ pipeline {
         stage('Overwrite TFVARS with Jenkins Secrets') {
             steps {
                 script {
-                    def tfvarsFile = "env/${params.ENV}.tfvars"
+                    def tfvarsFile = "envs/${params.ENV}.tfvars"
                     def content = """aws_region   = "${params.AWS_REGION}"
         environment  = "${params.ENV}"
         secret_name  = "${params.SECRET_NAME}"
