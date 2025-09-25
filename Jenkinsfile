@@ -9,9 +9,9 @@ pipeline {
         string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS Region')
 
         // Secrets from Jenkins (not in code)
-        string(name: 'SECRET_NAME', defaultValue: 'test1/dev-db', description: 'Secret Name')
-        string(name: 'SECRET_USERNAME', defaultValue: 'vikrant', description: 'Secret Username')
-        password(name: 'SECRET_PASSWORD', defaultValue: 'mypass123', description: 'Secret Password')
+        string(name: 'SECRET_NAME', defaultValue: 'test/dev-db', description: 'Secret Name')
+        string(name: 'SECRET_USERNAME', defaultValue: 'vikrantttt', description: 'Secret Username')
+        password(name: 'SECRET_PASSWORD', defaultValue: 'mypass1234', description: 'Secret Password')
     }
 
     environment {
