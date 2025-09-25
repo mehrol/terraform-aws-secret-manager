@@ -54,7 +54,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 bat """
-                terraform plan -input=false ^
+                terraform plan -input=false -var-file="envs/${params.ENV}.tfvars" ^
                   -var "aws_region=%TF_VAR_aws_region%" ^
                   -var "environment=%TF_VAR_environment%" ^
                   -var "secret_name=%TF_VAR_secret_name%" ^
@@ -66,7 +66,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 bat """
-                terraform apply -auto-approve -input=false ^
+                terraform apply -auto-approve -input=false -var-file="envs/${params.ENV}.tfvars ^
                   -var "aws_region=%TF_VAR_aws_region%" ^
                   -var "environment=%TF_VAR_environment%" ^
                   -var "secret_name=%TF_VAR_secret_name%" ^
