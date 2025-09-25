@@ -1,7 +1,7 @@
 pipeline {
     agent any
     tools {
-        git 'Default'  // Make sure Git is configured in Jenkins global tools
+        git 'Default'  // Ensure Git is configured in Jenkins global tools
     }
 
     parameters {
@@ -22,6 +22,7 @@ pipeline {
     environment {
         TF_VAR_aws_region  = "${params.AWS_REGION}"
         TF_VAR_environment = "${params.ENV}"
+        TFVARS_FILE        = "env/${params.ENV}.tfvars"  // path to auto tfvars
     }
 
     stages {
@@ -31,16 +32,27 @@ pipeline {
             }
         }
 
-        stage('Select Secret Vars') {
+        stage('Generate TFVARS') {
             steps {
                 script {
+                    def secretName = ""
+                    def secretValues = ""
+                    
                     if (params.ENV == 'dev') {
-                        env.TF_VAR_secret_name   = params.SECRET_DEV
-                        env.TF_VAR_secret_values = "{\"username\":\"${params.DB_USERNAME_DEV}\",\"password\":\"${params.DB_PASSWORD_DEV}\"}"
+                        secretName = params.SECRET_DEV
+                        secretValues = "{\"username\":\"${params.DB_USERNAME_DEV}\",\"password\":\"${params.DB_PASSWORD_DEV}\"}"
                     } else if (params.ENV == 'qa') {
-                        env.TF_VAR_secret_name   = params.SECRET_QA
-                        env.TF_VAR_secret_values = "{\"username\":\"${params.DB_USERNAME_QA}\",\"password\":\"${params.DB_PASSWORD_QA}\"}"
+                        secretName = params.SECRET_QA
+                        secretValues = "{\"username\":\"${params.DB_USERNAME_QA}\",\"password\":\"${params.DB_PASSWORD_QA}\"}"
                     }
+
+                    // Create or overwrite tfvars file
+                    bat """
+                    echo secret_name = \\"${secretName}\\" > %TFVARS_FILE%
+                    echo secret_values = '${secretValues}' >> %TFVARS_FILE%
+                    """
+                    
+                    echo "✅ TFVARS file generated at %TFVARS_FILE%"
                 }
             }
         }
@@ -54,9 +66,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 bat """
-                terraform plan -input=false -var-file="envs/${params.ENV}.tfvars" ^
-                  -var "secret_name=test/dev-db" ^
-                  -var "secret_values=%TF_VAR_secret_values%"
+                terraform plan -input=false -var-file="%TFVARS_FILE%"
                 """
             }
         }
@@ -64,9 +74,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 bat """
-                terraform apply -auto-approve -input=false -var-file="envs/${params.ENV}.tfvars ^
-                  -var "secret_name=test/dev-db" ^
-                  -var "secret_values=%TF_VAR_secret_values%"
+                terraform apply -auto-approve -input=false -var-file="%TFVARS_FILE%"
                 """
             }
         }
