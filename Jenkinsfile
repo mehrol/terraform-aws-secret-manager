@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        git 'Default'
+    }
 
     parameters {
         choice(name: 'ENV', choices: ['dev', 'qa'], description: 'Select environment')
