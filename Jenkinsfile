@@ -11,7 +11,7 @@ pipeline {
         // Secrets from Jenkins (not in code)
         string(name: 'SECRET_NAME', defaultValue: 'my/dev-db', description: 'Secret Name')
         string(name: 'SECRET_USERNAME', defaultValue: 'abhi', description: 'Secret Username')
-        password(name: 'SECRET_PASSWORD', defaultValue: 'mypass1234', description: 'Secret Password')
+        password(name: 'SECRET_PASSWORD', defaultValue: 'mypass12345', description: 'Secret Password')
     }
 
     environment {
