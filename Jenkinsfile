@@ -25,7 +25,7 @@ pipeline {
                 ]) {
 
                     // Overwrite values dynamically from Jenkins credentials or environment
-            sh """
+            sh '''
                 sed -i 's|^db_username *=.*|db_username = "${DB_USERNAME}"|' envs/dev.tfvars
                 sed -i 's|^db_password *=.*|db_password = "${DB_PASSWORD}"|' envs/dev.tfvars
                 sed -i 's|^stripe_secret_diagnostics *=.*|stripe_secret_diagnostics = "${STRIPE_SECRET_DIAGNOSTICS}"|' envs/dev.tfvars
@@ -33,7 +33,7 @@ pipeline {
                 sed -i 's|^stripe_secret_webhook *=.*|stripe_secret_webhook = "${STRIPE_SECRET_WEBHOOK}"|' envs/dev.tfvars
                 sed -i 's|^webhook_bn_transaction_details_url *=.*|webhook_bn_transaction_details_url = "https://catalyst.dev.optisom.com/service/v1/user/transaction-details?pwd=${WEBHOOK_PWD}"|' envs/dev.tfvars
                 sed -i 's|^webhook_bt_password *=.*|webhook_bt_password = "${WEBHOOK_BT_PASSWORD}"|' envs/dev.tfvars
-            """
+            '''
                 }
             }
         }
@@ -51,11 +51,11 @@ pipeline {
             string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
             string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
         ]) {
-            sh """
+            sh '''
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set default.region ap-south-1
-            """
+            '''
         }
     }
 }
