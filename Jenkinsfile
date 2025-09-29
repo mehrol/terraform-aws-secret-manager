@@ -3,7 +3,15 @@ pipeline {
     tools {
         git 'Default'  // Make sure Git is configured in Jenkins global tools
     }
-
+    environment {
+        DB_USERNAME = credentials('db-username')
+        DB_PASSWORD = credentials('db-password')
+        STRIPE_SECRET_DIAGNOSTICS = credentials('stripe-diagnostics')
+        STRIPE_SECRET_HOLDINGS    = credentials('stripe-holdings')
+        STRIPE_SECRET_WEBHOOK     = credentials('stripe-webhook')
+        WEBHOOK_PWD               = credentials('webhook-pwd')
+        WEBHOOK_BT_PASSWORD       = credentials('webhook-bt-password')
+    }
 
     stages {
         stage('Checkout') {
@@ -19,36 +27,68 @@ pipeline {
                     def tfvarsFile = "envs/dev.tfvars"
 
                     // Overwrite values dynamically from Jenkins credentials or environment
-                    sh """
-                        cat > ${tfvarsFile} <<EOF
-                        region   = "ap-south-1"
-                        stage    = "dev"
+                        bat """
+                        powershell -Command ^
+                        "@'
+                        region   = \\"ap-south-1\\"
+                        stage    = \\"qa\\"
 
                         # Database configuration for the QA environment
-                        db_host     = "admin"
-                        db_username = "${DB_USERNAME}"
-                        db_password = "${DB_PASSWORD}"
-                        db_name     = "bn_payment_posting_dev"
+                        db_host     = \\"admin\\"
+                        db_username = \\"$env:DB_USERNAME\\"
+                        db_password = \\"$env:DB_PASSWORD\\"
+                        db_name     = \\"bn_payment_posting_dev\\"
 
                         # Stripe configuration for the QA environment
-                        stripe_secret_diagnostics = "${STRIPE_SECRET_DIAGNOSTICS}"
-                        stripe_secret_holdings    = "${STRIPE_SECRET_HOLDINGS}"
-                        stripe_secret_webhook     = "${STRIPE_SECRET_WEBHOOK}"
+                        stripe_secret_diagnostics = \\"$env:STRIPE_SECRET_DIAGNOSTICS\\"
+                        stripe_secret_holdings    = \\"$env:STRIPE_SECRET_HOLDINGS\\"
+                        stripe_secret_webhook     = \\"$env:STRIPE_SECRET_WEBHOOK\\"
 
                         # Webhook configuration for the QA environment
-                        webhook_bn_transaction_details_url  = "https://catalyst.dev.optisom.com/service/v1/user/transaction-details?pwd=${WEBHOOK_PWD}"
+                        webhook_bn_transaction_details_url  = \\"https://catalyst.dev.optisom.com/service/v1/user/transaction-details?pwd=$env:WEBHOOK_PWD\\"
                         webhook_bt_retries                  = 3
                         webhook_bt_delay_ms                 = 2000
-                        webhook_bt_username                 = "abhargava@sleepdataapitest"
-                        webhook_bt_password                 = "${WEBHOOK_BT_PASSWORD}"
-                        webhook_bt_soap_action_deposit      = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/DepositCreate"
-                        webhook_bt_soap_action_deposit_receipt = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/ReceiptCreate"
-                        webhook_bt_soap_action_unapplied_payment = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/UnappliedPaymentCreate"
+                        webhook_bt_username                 = \\"abhargava@sleepdataapitest\\"
+                        webhook_bt_password                 = \\"$env:WEBHOOK_BT_PASSWORD\\"
+                        webhook_bt_soap_action_deposit      = \\"http://www.brightree.com/external/InvoicePaymentsService/IInvoiceService/DepositCreate\\"
+                        webhook_bt_soap_action_deposit_receipt = \\"http://www.brightree.com/external/InvoicePaymentsService/IInvoiceService/ReceiptCreate\\"
+                        webhook_bt_soap_action_unapplied_payment = \\"http://www.brightree.com/external/InvoicePaymentsService/IInvoiceService/UnappliedPaymentCreate\\"
                         webhook_bt_unapplied_payment_diagnostics_branch_bt_id = 105
                         webhook_bt_unapplied_payment_holdings_branch_bt_id   = 110
                         webhook_bt_unapplied_payment_pay_or_key              = 102
-                        EOF
+                        '@" | Out-File -Encoding UTF8 ${tfvarsFile}
                     """
+
+                    // sh """
+                    //     cat > ${tfvarsFile} <<EOF
+                    //     region   = "ap-south-1"
+                    //     stage    = "dev"
+
+                    //     # Database configuration for the QA environment
+                    //     db_host     = "admin"
+                    //     db_username = "${DB_USERNAME}"
+                    //     db_password = "${DB_PASSWORD}"
+                    //     db_name     = "bn_payment_posting_dev"
+
+                    //     # Stripe configuration for the QA environment
+                    //     stripe_secret_diagnostics = "${STRIPE_SECRET_DIAGNOSTICS}"
+                    //     stripe_secret_holdings    = "${STRIPE_SECRET_HOLDINGS}"
+                    //     stripe_secret_webhook     = "${STRIPE_SECRET_WEBHOOK}"
+
+                    //     # Webhook configuration for the QA environment
+                    //     webhook_bn_transaction_details_url  = "https://catalyst.dev.optisom.com/service/v1/user/transaction-details?pwd=${WEBHOOK_PWD}"
+                    //     webhook_bt_retries                  = 3
+                    //     webhook_bt_delay_ms                 = 2000
+                    //     webhook_bt_username                 = "abhargava@sleepdataapitest"
+                    //     webhook_bt_password                 = "${WEBHOOK_BT_PASSWORD}"
+                    //     webhook_bt_soap_action_deposit      = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/DepositCreate"
+                    //     webhook_bt_soap_action_deposit_receipt = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/ReceiptCreate"
+                    //     webhook_bt_soap_action_unapplied_payment = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/UnappliedPaymentCreate"
+                    //     webhook_bt_unapplied_payment_diagnostics_branch_bt_id = 105
+                    //     webhook_bt_unapplied_payment_holdings_branch_bt_id   = 110
+                    //     webhook_bt_unapplied_payment_pay_or_key              = 102
+                    //     EOF
+                    // """
                 }
             }
         }
