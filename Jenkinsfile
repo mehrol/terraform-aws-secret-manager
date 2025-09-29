@@ -4,19 +4,6 @@ pipeline {
         git 'Default'  // Make sure Git is configured in Jenkins global tools
     }
 
-    parameters {
-        choice(name: 'ENV', choices: ['dev', 'qa'], description: 'Select environment')
-        string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS Region')
-
-        // Secrets from Jenkins (not in code)
-        string(name: 'SECRET_NAME', defaultValue: 'my/dev-db', description: 'Secret Name')
-        string(name: 'SECRET_USERNAME', defaultValue: 'karan1', description: 'Secret Username')
-        password(name: 'SECRET_PASSWORD', defaultValue: 'mypass67', description: 'Secret Password')
-    }
-
-    environment {
-        TFVARS_FILE = "envs/${params.ENV}.tfvars"
-    }
 
     stages {
         stage('Checkout') {
@@ -25,20 +12,43 @@ pipeline {
             }
         }
 
-        stage('Overwrite TFVARS with Jenkins Secrets') {
+        stage('Prepare tfvars') {
             steps {
                 script {
-                    def tfvarsFile = "envs/${params.ENV}.tfvars"
-                    def content = """aws_region   = "${params.AWS_REGION}"
-        environment  = "${params.ENV}"
-        secret_name  = "${params.SECRET_NAME}"
-        secret_values = {
-        username = "${params.SECRET_USERNAME}"
-        password = "${params.SECRET_PASSWORD}"
-        }
-        """
-                    writeFile file: tfvarsFile, text: content
-                    echo "✅ TFVARS file updated at ${tfvarsFile}"
+                    // Path to your tfvars file
+                    def tfvarsFile = "envs/dev.tfvars"
+
+                    // Overwrite values dynamically from Jenkins credentials or environment
+                    sh """
+                        cat > ${tfvarsFile} <<EOF
+                        region   = "ap-south-1"
+                        stage    = "dev"
+
+                        # Database configuration for the QA environment
+                        db_host     = "admin"
+                        db_username = "${DB_USERNAME}"
+                        db_password = "${DB_PASSWORD}"
+                        db_name     = "bn_payment_posting_dev"
+
+                        # Stripe configuration for the QA environment
+                        stripe_secret_diagnostics = "${STRIPE_SECRET_DIAGNOSTICS}"
+                        stripe_secret_holdings    = "${STRIPE_SECRET_HOLDINGS}"
+                        stripe_secret_webhook     = "${STRIPE_SECRET_WEBHOOK}"
+
+                        # Webhook configuration for the QA environment
+                        webhook_bn_transaction_details_url  = "https://catalyst.dev.optisom.com/service/v1/user/transaction-details?pwd=${WEBHOOK_PWD}"
+                        webhook_bt_retries                  = 3
+                        webhook_bt_delay_ms                 = 2000
+                        webhook_bt_username                 = "abhargava@sleepdataapitest"
+                        webhook_bt_password                 = "${WEBHOOK_BT_PASSWORD}"
+                        webhook_bt_soap_action_deposit      = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/DepositCreate"
+                        webhook_bt_soap_action_deposit_receipt = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/ReceiptCreate"
+                        webhook_bt_soap_action_unapplied_payment = "http://www.brightree.com/external/InvoicePaymentsService/IInvoicePaymentsService/UnappliedPaymentCreate"
+                        webhook_bt_unapplied_payment_diagnostics_branch_bt_id = 105
+                        webhook_bt_unapplied_payment_holdings_branch_bt_id   = 110
+                        webhook_bt_unapplied_payment_pay_or_key              = 102
+                        EOF
+                    """
                 }
             }
         }
@@ -69,7 +79,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 bat """
-                terraform plan -input=false -var-file="%TFVARS_FILE%"
+                terraform plan -input=false -var-file="envs/dev.tfvars"
                 """
             }
         }
@@ -77,7 +87,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 bat """
-                terraform apply -auto-approve -input=false -var-file="%TFVARS_FILE%"
+                terraform apply -auto-approve -input=false -var-file="envs/dev.tfvars"
                 """
             }
         }
