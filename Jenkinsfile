@@ -14,13 +14,19 @@ pipeline {
 
         stage('Prepare tfvars') {
             steps {
-                script {
-                    // Path to your tfvars file
-                    def tfvarsFile = "envs/dev.tfvars"
+                withCredentials([
+                string(credentialsId: 'db-username-id', variable: 'DB_USERNAME'),
+                string(credentialsId: 'db-password-id', variable: 'DB_PASSWORD'),
+                string(credentialsId: 'stripe-diagnostics-id', variable: 'STRIPE_SECRET_DIAGNOSTICS'),
+                string(credentialsId: 'stripe-holdings-id', variable: 'STRIPE_SECRET_HOLDINGS'),
+                string(credentialsId: 'stripe-webhook-id', variable: 'STRIPE_SECRET_WEBHOOK'),
+                string(credentialsId: 'webhook-pwd-id', variable: 'WEBHOOK_PWD'),
+                string(credentialsId: 'webhook-bt-password-id', variable: 'WEBHOOK_BT_PASSWORD')
+                ]) {
 
                     // Overwrite values dynamically from Jenkins credentials or environment
                     sh """
-                        cat > ${tfvarsFile} <<EOF
+                        cat > envs/dev.tfvars <<EOF
                         region   = "ap-south-1"
                         stage    = "dev"
 
