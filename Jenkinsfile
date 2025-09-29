@@ -69,8 +69,8 @@ pipeline {
         stage('AWS Configure') {
         steps {
         withCredentials([
-            string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
-            string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
+            string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
+            string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
         ]) {
             sh """
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
